@@ -1,0 +1,155 @@
+<node>
+  <interface name="com.endlessm.Libanimation.ConnectionManager">
+    <!--
+      RegisterClient() -> o: Create a new AnimationManager object for
+                             the bus name of the caller’s connection.
+                             The bus name owned by the calling client
+                             will be observed by the service. The returned
+                             object path is to an AnimationManager for use
+                             by that client. When the client bus name disappears
+                             from the bus, the corresponding AnimationManager
+                             will be destroyed, along with any resources
+                             (such as AnimationEffect objects that it created).
+    -->
+    <method name="RegisterClient">
+      <arg name="path" direction="out" type="o"/>
+    </method>
+  </interface>
+  <interface name="com.endlessm.Libanimation.AnimationManager">
+    <!--
+      CreateAnimationEffect(ssa{sv}) -> o: Create a new AnimationEffect
+                                           on the bus with the title given by
+                                           the first parameter, an animation name
+                                           given by the second parameter and an
+                                           initial settings dictionary given by
+                                           the third parameter.
+
+                                           Returns the object path to the newly created
+                                           AnimationEffect on success.
+
+                                           If the animation name given by the second
+                                           parameter does not refer to a known animation,
+                                           the com.endlessm.Libanimation.NoSuchAnimation
+                                           error is raised.
+
+                                           Validation of the settings dictionary is done
+                                           by the created AnimationEffect. If validation fails, the
+                                           com.endlessm.Libanimation.UnsupportedSettingValueForAnimationEffect
+                                           error is raised. If there is no such setting name, the
+                                           com.endlessm.Libanimation.UnsupportedSettingNameForAnimationEffect
+                                           error is raised.
+
+                                           An example invocation would be
+                                           CreateAnimationEffect(“Wobbly Windows are Cool”,
+                                                                  “wobbly”,
+                                                                  {
+                                                                      “spring_constant”: {8.0},
+                                                                      “friction”: {1.0}
+                                                                  })
+    -->
+    <method name="CreateAnimationEffect">
+      <arg name="title" direction="in" type="s"/>
+      <arg name="animation" direction="in" type="s"/>
+      <arg name="settings" direction="in" type="a{sv}"/>
+      <arg name="path" direction="out" type="o"/>
+    </method>
+    <!--
+        ListSurfaces() -> (ao): Return an array listing all object paths to
+                                AnimatableSurface objects. The AnimatableSurface
+                                objects are shared between different users of the bus:
+    -->
+    <method name="ListSurfaces">
+      <arg name="surfaces" direction="out" type="ao"/>
+    </method>
+  </interface>
+  <interface name="com.endlessm.Libanimation.AnimatableSurface">
+    <!--
+        AttachAnimationEffect(so): Attach the AnimationEffect object given at the second
+                                   parameter to the event given by the first parameter on
+                                   this AnimatableSurface.
+
+                                   For instance, calling:
+
+                                       AttachAnimationEffect(“move”,
+                                                             “/com/endlessm/Libanimation/AnimationEffect/3”)
+
+                                   would attach the AnimationEffect 3 to the “move” event,
+                                   causing the AnimationEffect to be used when the surface
+                                   is moved. If the given AnimationEffect doesn’t support
+                                   the specified event type, an error
+                                   com.endlessm.Libanimation.UnsupportedEventForAnimationEffect
+                                   is raised. If the given AnimationSurface doesn’t support the
+                                   specified event type, the error
+                                   com.endlessm.Libanimation.UnsupportedEventForAnimationSurface
+                                   is raised.
+    -->
+    <method name="AttachAnimationEffect">
+      <arg name="event" direction="in" type="s"/>
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <!--
+        DetachAnimationEffect(so): Detach any AnimationEffect objects from the
+                                   event given by the first parameter. If no
+                                   AnimationEffect is attached to that event name,
+                                   the method call still succeeds but does nothing.
+                                   If the given AnimationEffect object doesn't exist,
+                                   the error com.endlessm.Libanimation.NoSuchEffect is raised.
+                                   If the given AnimationSurface doesn’t support the
+                                   specified event type, error
+                                   com.endlessm.Libanimation.UnsupportedEventForAnimationSurface
+                                   is raised.
+    -->
+    <method name="DetachAnimationEffect">
+      <arg name="event" direction="in" type="s"/>
+      <arg name="path" direction="in" type="o"/>
+    </method>
+    <!--
+        ListEffects() -> (a{sv}): Return a dictionary listing all available effect names
+                                  for a given event type on a window. For instance, the
+                                  dictionary may have the form:
+
+                                  {
+                                      “move”: [“wobbly”],
+                                      “open”: [“zoom”],
+                                      “close” [“zoom”]
+                                  }
+
+    -->
+    <method name="ListEffects">
+      <arg name="effects" direction="out" type="a{sv}"/>
+    </method>
+    <property name="Title" type="s" access="read"/>
+    <property name="Geometry" type="(iiii)" access="read"/>
+    <property name="Effects" type="a{sv}" access="read"/>
+  </interface>
+  <interface name="com.endlessm.Libanimation.AnimationEffect">
+    <!--
+        ChangeSetting(sv): Change the setting at the name given by the first parameter
+                           to have the value specified by the variant in the second parameter.
+
+                           Validation is done by the animation implementation.
+                           If validation fails, the
+                           com.endlessm.Libanimation.UnsupportedSettingValueForAnimationEffect
+                           error is raised. If there is no such setting name, the
+                           com.endlessm.Libanimation.UnsupportedSettingNameForAnimationEffect
+                           error is raised.
+
+                           An example invocation would be:
+                           ChangeSetting(“spring_constant”, {8.0}).
+    -->
+    <method name="ChangeSetting">
+      <arg name="name" direction="in" type="s"/>
+      <arg name="value" direction="in" type="v"/>
+    </method>
+    <!--
+        Delete(): Delete the given AnimationEffect object on the bus.
+                  The AnimationEffect will be implicitly detached from all
+                  AnimatableSurface objects.
+    -->
+    <method name="Delete">
+    </method>
+    <property name="Title" type="s" access="read"/>
+    <property name="Settings" type="a{sv}" access="read"/>
+    <property name="Schema" type="a{sv}" access="read"/>
+  </interface>
+<node>
