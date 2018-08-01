@@ -20,7 +20,7 @@
 
 #pragma once
 
-#if !(defined(_ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_SERVER_H) || defined(COMPILING_ANIMATIONS_DBUS))
+#if !(defined(_ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_CLIENT_H) || defined(_ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_SERVER_H) || defined(COMPILING_ANIMATIONS_DBUS))
 #error "Please do not include this header file directly."
 #endif
 

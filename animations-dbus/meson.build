@@ -15,6 +15,9 @@ gdbus_targets = gnome.gdbus_codegen('animations-dbus-objects',
     install_dir: join_paths(get_option('includedir'), api_name, 'animations-dbus'))
 
 installed_headers = [
+    'animations-dbus-client-effect.h',
+    'animations-dbus-client-object.h',
+    'animations-dbus-client-surface.h',
     'animations-dbus-errors.h',
     'animations-dbus-server.h',
     'animations-dbus-server-animation-manager.h',
@@ -29,10 +32,15 @@ installed_headers = [
     version_h
 ]
 private_headers = [
+    'animations-dbus-main-context-private.h',
     'animations-dbus-server-skeleton-properties.h'
 ]
 sources = [
     gdbus_targets[0],
+    'animations-dbus-client-effect.c',
+    'animations-dbus-client-object.c',
+    'animations-dbus-client-surface.c',
+    'animations-dbus-main-context-private.c',
     'animations-dbus-errors.c',
     'animations-dbus-server-animation-manager.c',
     'animations-dbus-server-effect.c',
