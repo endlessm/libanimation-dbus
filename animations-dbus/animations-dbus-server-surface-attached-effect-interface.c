@@ -18,16 +18,16 @@
  * - Sam Spilsbury <sam@endlessm.com>
  */
 
-#pragma once
-
 #include <glib.h>
 
-G_BEGIN_DECLS
+#include "animations-dbus-server-surface-attached-effect-interface.h"
 
-#define _ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_H
+G_DEFINE_INTERFACE (AnimationsDbusServerSurfaceAttachedEffect,
+                    animations_dbus_server_surface_attached_effect,
+                    G_TYPE_OBJECT)
 
-#include <animations-dbus-version.h>
+static void
+animations_dbus_server_surface_attached_effect_default_init (AnimationsDbusServerSurfaceAttachedEffectInterface *iface G_GNUC_UNUSED)
+{
+}
 
-#undef _ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_H
-
-G_END_DECLS

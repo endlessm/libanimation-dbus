@@ -15,13 +15,34 @@ gdbus_targets = gnome.gdbus_codegen('animations-dbus-objects',
     install_dir: join_paths(get_option('includedir'), api_name, 'animations-dbus'))
 
 installed_headers = [
-    'animations-dbus.h',
+    'animations-dbus-errors.h',
+    'animations-dbus-server.h',
+    'animations-dbus-server-animation-manager.h',
+    'animations-dbus-server-effect.h',
+    'animations-dbus-server-effect-bridge-interface.h',
+    'animations-dbus-server-effect-factory-interface.h',
+    'animations-dbus-server-object.h',
+    'animations-dbus-server-surface.h',
+    'animations-dbus-server-surface-attached-effect-interface.h',
+    'animations-dbus-server-surface-bridge-interface.h',
+    'animations-dbus-server-types.h',
     version_h
 ]
 private_headers = [
+    'animations-dbus-server-skeleton-properties.h'
 ]
 sources = [
-    gdbus_targets[0]
+    gdbus_targets[0],
+    'animations-dbus-errors.c',
+    'animations-dbus-server-animation-manager.c',
+    'animations-dbus-server-effect.c',
+    'animations-dbus-server-effect-bridge-interface.c',
+    'animations-dbus-server-effect-factory-interface.c',
+    'animations-dbus-server-object.c',
+    'animations-dbus-server-skeleton-properties.c',
+    'animations-dbus-server-surface.c',
+    'animations-dbus-server-surface-attached-effect-interface.c',
+    'animations-dbus-server-surface-bridge-interface.c'
 ]
 
 include = include_directories('.')
