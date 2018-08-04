@@ -22,8 +22,15 @@ config = configuration_data()
 config.set_quoted('ANIMATIONS_DBUS_VERSION', meson.project_version())
 configure_file(configuration: config, output: 'config.h')
 
+jasmine_report_argument = ''
+junit_reports_dir = get_option('jasmine_junit_reports_dir')
+if junit_reports_dir != ''
+    jasmine_report_argument = '--junit=@0@/${log/.log/.js.xml}'.format(junit_reports_dir)
+endif
+
 subdir('data')
 subdir('animations-dbus')
+subdir('tests')
 
 requires = [gio, gio_unix, glib, gobject]
 
