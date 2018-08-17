@@ -1,0 +1,98 @@
+/* Copyright 2018 Endless Mobile, Inc.
+ *
+ * libanimation-dbus is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 2.1 of the
+ * License, or (at your option) any later version.
+ *
+ * libanimation-dbus is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with eos-discovery-feed.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ * - Sam Spilsbury <sam@endlessm.com>
+ */
+
+#pragma once
+
+#if !(defined(_ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_CLIENT_H) || defined(_ANIMATIONS_DBUS_INSIDE_ANIMATIONS_DBUS_SERVER_H) || defined(COMPILING_ANIMATIONS_DBUS))
+#error "Please do not include this header file directly."
+#endif
+
+/**
+ * SECTION:version-information
+ * @title: Version Information
+ * @short_description: Variables and functions to check the library version
+ *
+ * Some macros to check the version of the content library.
+ */
+
+/**
+ * ANIMATIONS_DBUS_MAJOR_VERSION:
+ *
+ * Major version number (API level) of the ANIMATIONS_DBUS library.
+ * For example, this is 0 for version 0.6.1.
+ */
+#define ANIMATIONS_DBUS_MAJOR_VERSION (@ANIMATIONS_DBUS_MAJOR_VERSION@)
+/**
+ * ANIMATIONS_DBUS_MINOR_VERSION:
+ *
+ * Minor version number of the ANIMATIONS_DBUS library.
+ * For example, this is 6 for version 0.6.1.
+ */
+#define ANIMATIONS_DBUS_MINOR_VERSION (@ANIMATIONS_DBUS_MINOR_VERSION@)
+/**
+ * ANIMATIONS_DBUS_MICRO_VERSION:
+ *
+ * Micro version number of the ANIMATIONS_DBUS library.
+ * For example, this is 1 for version 0.6.1.
+ */
+#define ANIMATIONS_DBUS_MICRO_VERSION (@ANIMATIONS_DBUS_MICRO_VERSION@)
+
+/**
+ * ANIMATIONS_DBUS_VERSION_S:
+ *
+ * Evaluates to a string with the version of ANIMATIONS_DBUS, useful for concatenating
+ * or for printing.
+ */
+#define ANIMATIONS_DBUS_VERSION_S "@ANIMATIONS_DBUS_MAJOR_VERSION@.@ANIMATIONS_DBUS_MINOR_VERSION@.@ANIMATIONS_DBUS_MICRO_VERSION@"
+
+#define _ANIMATIONS_DBUS_ENCODE_VERSION(major,minor,micro) \
+    ((major) << 24 | (minor) << 16 | (micro) << 8)
+
+/**
+ * ANIMATIONS_DBUS_VERSION:
+ *
+ * Evaluates to an encoded integer representation of the ANIMATIONS_DBUS version, useful
+ * for compile-time version comparisons.
+ *
+ * Use %ANIMATIONS_DBUS_ENCODE_VERSION to generate an integer representation that can be
+ * compared to the result of this macro, e.g.:
+ *
+ * |[<!-- language="C" -->
+ * #if ANIMATIONS_DBUS_VERSION >= ANIMATIONS_DBUS_ENCODE_VERSION (0, 6, 1)
+ *   // code that can be used with ANIMATIONS_DBUS 0.6.1 or later
+ * #elif
+ *   // code that can be used with earlier versions of ANIMATIONS_DBUS
+ * #endif
+ * ]|
+ */
+#define ANIMATIONS_DBUS_VERSION \
+  (_ANIMATIONS_DBUS_ENCODE_VERSION (ANIMATIONS_DBUS_MAJOR_VERSION, ANIMATIONS_DBUS_MINOR_VERSION, ANIMATIONS_DBUS_MICRO_VERSION))
+
+/**
+ * ANIMATIONS_DBUS_ENCODE_VERSION:
+ * @major: the major version number, e.g. 0
+ * @minor: the minor version number, e.g. 6
+ * @micro: the micro version number, e.g. 1
+ *
+ * Generates an integer-encoded representation of a ANIMATIONS_DBUS version, useful for
+ * compile-time comparisons with %ANIMATIONS_DBUS_VERSION.
+ */
+#define ANIMATIONS_DBUS_ENCODE_VERSION(major,minor,micro) \
+  (_ANIMATIONS_DBUS_ENCODE_VERSION ((major), (minor), (micro))
