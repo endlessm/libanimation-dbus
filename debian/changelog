@@ -1,0 +1,6 @@
+libanimations-dbus (0.0.0) eos; urgency=medium
+
+  * debian/control
+     - Import of package libanimation-dbus
+
+ -- Sam Spilsbury <sam@endlessm.com>  Thu, 19 Aug 2018 02:26:53 +0800
