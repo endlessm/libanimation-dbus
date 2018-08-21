@@ -59,7 +59,7 @@ include = include_directories('.')
 main_library = shared_library('@0@-@1@'.format(meson.project_name(), api_version),
     sources, installed_headers, private_headers,
     c_args: ['-DG_LOG_DOMAIN="@0@"'.format(namespace_name),
-        '-DCOMPILING_DMODEL'],
+        '-DCOMPILING_ANIMATIONS_DBUS'],
     dependencies: [gio, gio_unix, glib, gobject],
     include_directories: include, install: true,
     soversion: api_version, version: libtool_version)
