@@ -37,6 +37,7 @@ private_headers = [
 ]
 sources = [
     gdbus_targets[0],
+    gdbus_targets[1],
     'animations-dbus-client-effect.c',
     'animations-dbus-client-object.c',
     'animations-dbus-client-surface.c',
