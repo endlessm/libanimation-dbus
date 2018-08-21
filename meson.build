@@ -9,7 +9,8 @@ pkg = import('pkgconfig')
 
 version_components = meson.project_version().split('.')
 api_version = version_components[0]
-api_name = '@0@-@1@'.format(meson.project_name(), api_version)
+# We want headers etc to go into animations-dbus-0, not libanimations-dbus-0
+api_name = '@0@-@1@'.format('animations-dbus'), api_version)
 libtool_version = '0.0.0'
 namespace_name = 'AnimationsDbus'
 
