@@ -37,6 +37,6 @@ requires = [gio, gio_unix, glib, gobject]
 pkg.generate(filebase: api_name, libraries: [main_library],
     description: 'DBus API for remotely programmable animations',
     name: meson.project_name(), subdirs: api_name, requires: requires,
-    url: 'http://endlessm.github.io/libanimation-dbus',
+    url: 'http://endlessm.github.io/libanimations-dbus',
     version: meson.project_version())
 
