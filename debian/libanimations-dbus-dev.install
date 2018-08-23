@@ -1,0 +1,4 @@
+usr/include/animations-dbus-0/*
+usr/lib/*/libanimations-dbus-0.so
+usr/lib/*/pkgconfig/animations-dbus-0.pc
+usr/share/gir-1.0/AnimationsDbus-0.gir

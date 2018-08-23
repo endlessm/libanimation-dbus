@@ -1,0 +1,41 @@
+Source: libanimations-dbus
+Priority: extra
+Maintainer: Sam Spilsbury <sam@endlessm.com>
+Build-Depends: debhelper (>= 8.0.0),
+               cdbs,
+               git,
+               gjs,
+               gobject-introspection,
+               jasmine-gjs (>= 2.2.0),
+               libgirepository1.0-dev,
+               libglib2.0-dev,
+               libgtest-dev,
+               meson
+Standards-Version: 3.9.4
+Section: libs
+Vcs-Git: git://github.com/endless/libanimation.git
+
+Package: libanimations-dbus-dev
+Section: libdevel
+Architecture: any
+Depends: libanimations-dbus0 (= ${binary:Version}),
+Description: 2D Surfaces Animations (DBus API) headers
+ 2D Surfaces Animations (DBus API) headers
+
+Package: libanimations-dbus0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: 2D Surfaces Animations (DBus API)
+ 2D Surfaces Animations (DBus API)
+
+Package: gir1.2-animations-dbus
+Section: non-free/libs
+Architecture: any
+Depends: ${gir:Depends},
+         ${misc:Depends},
+         ${shlibs:Depends},
+         libanimations-dbus0 (= ${binary:Version})
+Description: 2D Surfaces Animations (DBus API) GObject Introspection files
+ 2D Surfaces Animations (DBus API) GObject Introspection files
