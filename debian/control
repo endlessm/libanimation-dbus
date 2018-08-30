@@ -30,7 +30,7 @@ Depends: ${shlibs:Depends},
 Description: 2D Surfaces Animations (DBus API)
  2D Surfaces Animations (DBus API)
 
-Package: gir1.2-animations-dbus
+Package: gir1.2-animations-dbus-0
 Section: non-free/libs
 Architecture: any
 Depends: ${gir:Depends},
