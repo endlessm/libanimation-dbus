@@ -263,7 +263,7 @@ if __name__ == '__main__':
     rules = Rules()
 
     try:
-        out = subprocess.check_output(sys.argv[1:], universal_newlines=True)
+        out = subprocess.check_output(' '.join(sys.argv[1:]), universal_newlines=True, shell=True)
     except subprocess.CalledProcessError as e:
         sys.stdout.write(e.output)
         raise e
