@@ -34,7 +34,7 @@ struct _AnimationsDbusServer
 
 typedef struct _AnimationsDbusServerPrivate
 {
-  GDBusConnection                         *connection;
+  GDBusConnection                         *connection;  /* (owned) */
   guint                                    name_id;
   AnimationsDbusConnectionManagerSkeleton *connection_manager_skeleton;
 
@@ -474,7 +474,7 @@ on_got_session_bus_connection (GObject      *object G_GNUC_UNUSED,
       return;
     }
 
-  priv->connection = connection;
+  priv->connection = g_steal_pointer (&connection);
 
   /* Now that we have the connection, own the bus name on
    * behalf of the caller. */
