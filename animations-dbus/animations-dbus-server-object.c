@@ -446,14 +446,14 @@ on_lost_session_bus_name (GDBusConnection *connection G_GNUC_UNUSED,
 
 static inline unsigned int
 attempt_to_own_session_bus_name (GDBusConnection *connection,
-                                 GTask           *task)
+                                 GTask           *task  /* (transfer full) */)
 {
   return g_bus_own_name_on_connection (connection,
                                        LIBANIMATION_DBUS_NAME,
                                        G_BUS_NAME_OWNER_FLAGS_DO_NOT_QUEUE,
                                        on_got_session_bus_name,
                                        on_lost_session_bus_name,
-                                       task,
+                                       g_steal_pointer (&task),
                                        g_object_unref);
 }
 
@@ -464,7 +464,7 @@ on_got_session_bus_connection (GObject      *object G_GNUC_UNUSED,
 {
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusConnection) connection = g_bus_get_finish (result, &local_error);
-  GTask *task = user_data;
+  g_autoptr(GTask) task = user_data;
   AnimationsDbusServer *server = g_task_get_task_data (task);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
@@ -478,7 +478,7 @@ on_got_session_bus_connection (GObject      *object G_GNUC_UNUSED,
 
   /* Now that we have the connection, own the bus name on
    * behalf of the caller. */
-  priv->name_id = attempt_to_own_session_bus_name (priv->connection, task);
+  priv->name_id = attempt_to_own_session_bus_name (priv->connection, g_steal_pointer (&task));
 }
 
 static gboolean
@@ -500,7 +500,7 @@ animations_dbus_server_init_async (GAsyncInitable      *initable,
 {
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (initable);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
-  GTask *task = g_task_new (initable, cancellable, callback, user_data);
+  g_autoptr(GTask) task = g_task_new (initable, cancellable, callback, user_data);
 
   g_task_set_task_data (task, server, NULL);
 
@@ -515,14 +515,14 @@ animations_dbus_server_init_async (GAsyncInitable      *initable,
   if (priv->connection != NULL)
     {
       priv->name_id = attempt_to_own_session_bus_name (priv->connection,
-                                                       task);
+                                                       g_steal_pointer (&task));
       return;
     }
 
   g_bus_get (G_BUS_TYPE_SESSION,
              cancellable,
              on_got_session_bus_connection,
-             task);
+             g_steal_pointer (&task));
 }
 
 static void
