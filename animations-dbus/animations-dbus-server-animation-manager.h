@@ -46,6 +46,7 @@ AnimationsDbusServerEffect * animations_dbus_server_animation_manager_create_eff
 gboolean animations_dbus_server_animation_manager_export (AnimationsDbusServerAnimationManager  *server_animation_manager,
                                                           const char                            *object_path,
                                                           GError                               **error);
+void animations_dbus_server_animation_manager_unexport (AnimationsDbusServerAnimationManager *server_animation_manager);
 
 AnimationsDbusServerAnimationManager * animations_dbus_server_animation_manager_new (GDBusConnection                   *connection,
                                                                                      AnimationsDbusServer              *server,
