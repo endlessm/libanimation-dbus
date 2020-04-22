@@ -42,7 +42,7 @@ typedef struct _AnimationsDbusServerPrivate
 
   /* One AnimationManager per client connection */
   GHashTable *animation_manager_ids; /* (key-type: utf8) (value-type: guint) */
-  GHashTable *animation_managers;  /* (key-type: guint) (value-type: AnimationsDbusAnimationManager) */
+  GHashTable *animation_managers;  /* (key-type: guint) (value-type: AnimationsDbusServerAnimationManager) */
   guint       animation_manager_serial;
 
   /* When a client calls RegisterClient and we create an
