@@ -288,6 +288,8 @@ unregister_client (AnimationsDbusServer *server,
                                     (gpointer *) &watch_id_ptr))
     {
       unsigned int watch_id = GPOINTER_TO_UINT (watch_id_ptr);
+      g_autoptr(AnimationsDbusServerAnimationManager) server_animation_manager =
+          g_object_ref (g_hash_table_lookup (priv->animation_managers, name));
 
       g_bus_unwatch_name (watch_id);
       g_hash_table_remove (priv->client_name_watches, name);
@@ -302,6 +304,8 @@ unregister_client (AnimationsDbusServer *server,
                                                             (gpointer) name);
 
       g_assert (n_removed > 0);
+
+      animations_dbus_server_animation_manager_unexport (server_animation_manager);
 
       g_signal_emit (server,
                      animations_dbus_server_signals[SIGNAL_CLIENT_DISCONNECTED],
