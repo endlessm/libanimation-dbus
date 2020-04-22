@@ -276,11 +276,9 @@ remove_if_value_strequal (gpointer key G_GNUC_UNUSED,
 }
 
 static void
-on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
-                                      const char      *name,
-                                      gpointer         user_data)
+unregister_client (AnimationsDbusServer *server,
+                   const gchar          *name)
 {
-  AnimationsDbusServer *server = user_data;
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
   gpointer watch_id_ptr = NULL;
 
@@ -310,6 +308,16 @@ on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
                      0,
                      name);
     }
+}
+
+static void
+on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
+                                      const char      *name,
+                                      gpointer         user_data)
+{
+  AnimationsDbusServer *server = user_data;
+
+  unregister_client (server, name);
 }
 
 static gboolean
