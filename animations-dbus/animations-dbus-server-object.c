@@ -595,6 +595,8 @@ animations_dbus_server_dispose (GObject *object)
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (object);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
+  animations_dbus_server_stop (server, NULL, NULL);
+
   g_clear_object (&priv->connection);
   g_clear_object (&priv->connection_manager_skeleton);
   g_clear_object (&priv->effect_factory);
@@ -611,13 +613,8 @@ animations_dbus_server_finalize (GObject *object)
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (object);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
+  g_assert (priv->name_id == 0);
   g_clear_pointer (&priv->client_name_watches, g_hash_table_unref);
-
-  if (priv->name_id != 0)
-    {
-      g_bus_unown_name (priv->name_id);
-      priv->name_id = 0;
-    }
 
   G_OBJECT_CLASS (animations_dbus_server_parent_class)->finalize (object);
 }
@@ -746,4 +743,72 @@ animations_dbus_server_new_with_connection_async (AnimationsDbusServerEffectFact
                               "connection", connection,
                               "effect-factory", factory,
                               NULL);
+}
+
+/**
+ * animations_dbus_server_stop:
+ * @self: an #AnimationsDbusServer
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Stop the server, unexport all D-Bus objects, and unown the well-known
+ * D-Bus name for the service.
+ *
+ * Once stopped, the server object can only be unreffed and destroyed: it cannot
+ * be restarted.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean
+animations_dbus_server_stop (AnimationsDbusServer  *self,
+                             GCancellable          *cancellable,
+                             GError               **error)
+{
+  AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (self);
+  gboolean error_seen = FALSE;
+
+  g_return_val_if_fail (ANIMATIONS_DBUS_IS_SERVER (self), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  while (priv->animatable_surfaces != NULL && priv->animatable_surfaces->len > 0)
+    {
+      AnimationsDbusServerSurface *surface = g_ptr_array_index (priv->animatable_surfaces, 0);
+
+      if (!animations_dbus_server_unregister_surface (self, surface, NULL))
+        error_seen = TRUE;
+    }
+
+  if (priv->animation_managers != NULL)
+    {
+      /* Operate on a copy of the keys of @animation_managers to avoid iterating while modifying the hash table.
+       * Operate on a copy of the name as unregistering it will free the original storage location. */
+      GList *names = g_hash_table_get_keys (priv->animation_managers);
+      GList *l;
+
+      for (l = names; l != NULL; l = l->next)
+        {
+          const gchar *name = l->data;
+          g_autofree gchar *name_copy = g_strdup (name);
+          unregister_client (self, name_copy);
+        }
+
+      g_list_free (names);
+    }
+
+  if (priv->connection_manager_skeleton != NULL &&
+      g_dbus_interface_skeleton_get_connection (G_DBUS_INTERFACE_SKELETON (priv->connection_manager_skeleton)) != NULL)
+    g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (priv->connection_manager_skeleton));
+
+  if (priv->name_id != 0)
+    {
+      g_bus_unown_name (priv->name_id);
+      priv->name_id = 0;
+    }
+
+  if (error_seen)
+    g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Partially failed stopping the animation server");
+
+  return !error_seen;
 }

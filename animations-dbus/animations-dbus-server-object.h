@@ -68,4 +68,8 @@ void animations_dbus_server_new_with_connection_async (AnimationsDbusServerEffec
                                                        GAsyncReadyCallback                callback,
                                                        gpointer                           user_data);
 
+gboolean animations_dbus_server_stop (AnimationsDbusServer  *self,
+                                      GCancellable          *cancellable,
+                                      GError               **error);
+
 G_END_DECLS
