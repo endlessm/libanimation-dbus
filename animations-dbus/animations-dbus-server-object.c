@@ -34,7 +34,7 @@ struct _AnimationsDbusServer
 
 typedef struct _AnimationsDbusServerPrivate
 {
-  GDBusConnection                         *connection;
+  GDBusConnection                         *connection;  /* (owned) */
   guint                                    name_id;
   AnimationsDbusConnectionManagerSkeleton *connection_manager_skeleton;
 
@@ -42,7 +42,7 @@ typedef struct _AnimationsDbusServerPrivate
 
   /* One AnimationManager per client connection */
   GHashTable *animation_manager_ids; /* (key-type: utf8) (value-type: guint) */
-  GHashTable *animation_managers;  /* (key-type: guint) (value-type: AnimationsDbusAnimationManager) */
+  GHashTable *animation_managers;  /* (key-type: guint) (value-type: AnimationsDbusServerAnimationManager) */
   guint       animation_manager_serial;
 
   /* When a client calls RegisterClient and we create an
@@ -276,11 +276,9 @@ remove_if_value_strequal (gpointer key G_GNUC_UNUSED,
 }
 
 static void
-on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
-                                      const char      *name,
-                                      gpointer         user_data)
+unregister_client (AnimationsDbusServer *server,
+                   const gchar          *name)
 {
-  AnimationsDbusServer *server = user_data;
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
   gpointer watch_id_ptr = NULL;
 
@@ -290,6 +288,8 @@ on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
                                     (gpointer *) &watch_id_ptr))
     {
       unsigned int watch_id = GPOINTER_TO_UINT (watch_id_ptr);
+      g_autoptr(AnimationsDbusServerAnimationManager) server_animation_manager =
+          g_object_ref (g_hash_table_lookup (priv->animation_managers, name));
 
       g_bus_unwatch_name (watch_id);
       g_hash_table_remove (priv->client_name_watches, name);
@@ -305,11 +305,23 @@ on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
 
       g_assert (n_removed > 0);
 
+      animations_dbus_server_animation_manager_unexport (server_animation_manager);
+
       g_signal_emit (server,
                      animations_dbus_server_signals[SIGNAL_CLIENT_DISCONNECTED],
                      0,
                      name);
     }
+}
+
+static void
+on_animation_manager_owner_name_lost (GDBusConnection *connection G_GNUC_UNUSED,
+                                      const char      *name,
+                                      gpointer         user_data)
+{
+  AnimationsDbusServer *server = user_data;
+
+  unregister_client (server, name);
 }
 
 static gboolean
@@ -446,14 +458,14 @@ on_lost_session_bus_name (GDBusConnection *connection G_GNUC_UNUSED,
 
 static inline unsigned int
 attempt_to_own_session_bus_name (GDBusConnection *connection,
-                                 GTask           *task)
+                                 GTask           *task  /* (transfer full) */)
 {
   return g_bus_own_name_on_connection (connection,
                                        LIBANIMATION_DBUS_NAME,
                                        G_BUS_NAME_OWNER_FLAGS_DO_NOT_QUEUE,
                                        on_got_session_bus_name,
                                        on_lost_session_bus_name,
-                                       task,
+                                       g_steal_pointer (&task),
                                        g_object_unref);
 }
 
@@ -464,7 +476,7 @@ on_got_session_bus_connection (GObject      *object G_GNUC_UNUSED,
 {
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GDBusConnection) connection = g_bus_get_finish (result, &local_error);
-  GTask *task = user_data;
+  g_autoptr(GTask) task = user_data;
   AnimationsDbusServer *server = g_task_get_task_data (task);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
@@ -474,11 +486,11 @@ on_got_session_bus_connection (GObject      *object G_GNUC_UNUSED,
       return;
     }
 
-  priv->connection = connection;
+  priv->connection = g_steal_pointer (&connection);
 
   /* Now that we have the connection, own the bus name on
    * behalf of the caller. */
-  priv->name_id = attempt_to_own_session_bus_name (priv->connection, task);
+  priv->name_id = attempt_to_own_session_bus_name (priv->connection, g_steal_pointer (&task));
 }
 
 static gboolean
@@ -500,7 +512,7 @@ animations_dbus_server_init_async (GAsyncInitable      *initable,
 {
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (initable);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
-  GTask *task = g_task_new (initable, cancellable, callback, user_data);
+  g_autoptr(GTask) task = g_task_new (initable, cancellable, callback, user_data);
 
   g_task_set_task_data (task, server, NULL);
 
@@ -515,14 +527,14 @@ animations_dbus_server_init_async (GAsyncInitable      *initable,
   if (priv->connection != NULL)
     {
       priv->name_id = attempt_to_own_session_bus_name (priv->connection,
-                                                       task);
+                                                       g_steal_pointer (&task));
       return;
     }
 
   g_bus_get (G_BUS_TYPE_SESSION,
              cancellable,
              on_got_session_bus_connection,
-             task);
+             g_steal_pointer (&task));
 }
 
 static void
@@ -583,6 +595,8 @@ animations_dbus_server_dispose (GObject *object)
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (object);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
+  animations_dbus_server_stop (server, NULL, NULL);
+
   g_clear_object (&priv->connection);
   g_clear_object (&priv->connection_manager_skeleton);
   g_clear_object (&priv->effect_factory);
@@ -599,13 +613,8 @@ animations_dbus_server_finalize (GObject *object)
   AnimationsDbusServer *server = ANIMATIONS_DBUS_SERVER (object);
   AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (server);
 
+  g_assert (priv->name_id == 0);
   g_clear_pointer (&priv->client_name_watches, g_hash_table_unref);
-
-  if (priv->name_id != 0)
-    {
-      g_bus_unown_name (priv->name_id);
-      priv->name_id = 0;
-    }
 
   G_OBJECT_CLASS (animations_dbus_server_parent_class)->finalize (object);
 }
@@ -734,4 +743,72 @@ animations_dbus_server_new_with_connection_async (AnimationsDbusServerEffectFact
                               "connection", connection,
                               "effect-factory", factory,
                               NULL);
+}
+
+/**
+ * animations_dbus_server_stop:
+ * @self: an #AnimationsDbusServer
+ * @cancellable: (nullable): a #GCancellable, or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Stop the server, unexport all D-Bus objects, and unown the well-known
+ * D-Bus name for the service.
+ *
+ * Once stopped, the server object can only be unreffed and destroyed: it cannot
+ * be restarted.
+ *
+ * Returns: %TRUE on success, %FALSE otherwise
+ */
+gboolean
+animations_dbus_server_stop (AnimationsDbusServer  *self,
+                             GCancellable          *cancellable,
+                             GError               **error)
+{
+  AnimationsDbusServerPrivate *priv = animations_dbus_server_get_instance_private (self);
+  gboolean error_seen = FALSE;
+
+  g_return_val_if_fail (ANIMATIONS_DBUS_IS_SERVER (self), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  while (priv->animatable_surfaces != NULL && priv->animatable_surfaces->len > 0)
+    {
+      AnimationsDbusServerSurface *surface = g_ptr_array_index (priv->animatable_surfaces, 0);
+
+      if (!animations_dbus_server_unregister_surface (self, surface, NULL))
+        error_seen = TRUE;
+    }
+
+  if (priv->animation_managers != NULL)
+    {
+      /* Operate on a copy of the keys of @animation_managers to avoid iterating while modifying the hash table.
+       * Operate on a copy of the name as unregistering it will free the original storage location. */
+      GList *names = g_hash_table_get_keys (priv->animation_managers);
+      GList *l;
+
+      for (l = names; l != NULL; l = l->next)
+        {
+          const gchar *name = l->data;
+          g_autofree gchar *name_copy = g_strdup (name);
+          unregister_client (self, name_copy);
+        }
+
+      g_list_free (names);
+    }
+
+  if (priv->connection_manager_skeleton != NULL &&
+      g_dbus_interface_skeleton_get_connection (G_DBUS_INTERFACE_SKELETON (priv->connection_manager_skeleton)) != NULL)
+    g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (priv->connection_manager_skeleton));
+
+  if (priv->name_id != 0)
+    {
+      g_bus_unown_name (priv->name_id);
+      priv->name_id = 0;
+    }
+
+  if (error_seen)
+    g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                         "Partially failed stopping the animation server");
+
+  return !error_seen;
 }

@@ -111,6 +111,12 @@ animations_dbus_server_animation_manager_export (AnimationsDbusServerAnimationMa
                                            error);
 }
 
+void
+animations_dbus_server_animation_manager_unexport (AnimationsDbusServerAnimationManager *server_animation_manager)
+{
+  g_dbus_interface_skeleton_unexport (G_DBUS_INTERFACE_SKELETON (server_animation_manager));
+}
+
 /**
  * animations_dbus_server_animation_manager_create_effect:
  * @server_animation_manager: An #AnimationsDbusServerAnimationManager.
