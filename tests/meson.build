@@ -26,5 +26,5 @@ endif
 foreach test_file : javascript_tests
     srcdir_file = join_paths(meson.current_source_dir(), test_file)
     test(test_file, test_runner, env: tests_environment,
-        args: args + [srcdir_file])
+        args: ['dbus-run-session'] + args + [srcdir_file])
 endforeach
